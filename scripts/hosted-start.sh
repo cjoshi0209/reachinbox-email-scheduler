@@ -15,8 +15,8 @@ for i in $(seq 1 90); do
   sleep 2
 done
 
-(cd backend && [ -d node_modules ] || npm ci) >/dev/null
-(cd frontend && [ -d node_modules ] || npm ci) >/dev/null
+(cd backend && ([ -d node_modules ] || npm ci || npm install --no-audit --no-fund)) >/dev/null
+(cd frontend && ([ -d node_modules ] || npm ci || npm install --no-audit --no-fund)) >/dev/null
 
 cd backend
 npx prisma migrate deploy
