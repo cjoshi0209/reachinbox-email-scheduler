@@ -7,5 +7,6 @@
     "3000": { "label": "Dashboard", "onAutoForward": "silent" },
     "4000": { "label": "API", "onAutoForward": "silent" }
   },
-  "postCreateCommand": "cd backend && npm ci && cd ../frontend && npm ci"
+  "postCreateCommand": "cd backend && (npm ci || npm install) && cd ../frontend && (npm ci || npm install)",
+  "postStartCommand": "[ -f backend/.env ] && (setsid nohup bash scripts/hosted-start.sh > logs/start.log 2>&1 < /dev/null &) || true"
 }
