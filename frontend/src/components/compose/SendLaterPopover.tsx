@@ -45,6 +45,7 @@ export function SendLaterPopover({ value, onDone, onCancel }: { value: Date | nu
             setError('');
           }}
           aria-label="Pick date & time"
+          step={1}
           data-testid="send-later-input"
           className="w-full bg-transparent text-sm outline-none"
         />

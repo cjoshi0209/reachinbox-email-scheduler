@@ -335,7 +335,10 @@ Google's own consent screen can't be automated, so the E2E setup signs a session
 
 ## 8. Demo script (≤ 5 min)
 
-**Recorded demo:** [`docs/demo.webm`](docs/demo.webm) (recorded against the live stack with `frontend/scripts/record-demo.mjs`). It shows login, compose + CSV, scheduled/sent, Bull Board, the hourly limit with rescheduling and the Slack alert, a backend stop/restart, 1,000 emails under load, and search.
+**Recorded demo (4:16, narrated):** [`docs/demo.mp4`](docs/demo.mp4). It was recorded against the live stack as a real Google user, with a real Slack workspace and real Ethereal SMTP. It shows:
+Google login → compose with an Ethereal sender and CSV upload → Scheduled → Bull Board → sends spaced by the min delay → hourly limit hit, overflow rescheduled and a Slack alert posted → a full API + worker stop and restart with emails still sent on time, exactly once → 1,000 emails in one request → Elasticsearch search.
+
+How it's produced (reproducible): `frontend/scripts/record-demo.mjs` drives Playwright against a separate demo namespace (its own DB, queue and index) and times each scene to a narration clip. The narration comes from `frontend/scripts/demo/narration.json`, voiced with Windows TTS by `frontend/scripts/demo/tts.ps1`. ffmpeg then muxes an H.264/AAC MP4.
 
 To present it yourself:
 

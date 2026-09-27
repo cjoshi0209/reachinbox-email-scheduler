@@ -9,6 +9,7 @@ const backend = process.env.BACKEND_URL ?? 'http://localhost:4000';
  */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  devIndicators: false,
   outputFileTracingRoot: path.join(__dirname),
   images: { remotePatterns: [{ protocol: 'https', hostname: 'lh3.googleusercontent.com' }] },
   async rewrites() {

@@ -1,0 +1,22 @@
+[
+  { "id": "s01", "text": "Hi! This is my submission for the ReachInbox full-stack assignment: an email job scheduler. The backend is Express with TypeScript. It uses BullMQ on Redis for scheduling, Postgres as the source of truth, Ethereal for SMTP, and Elasticsearch for search. The dashboard is Next.js with Tailwind, built from the Figma design." },
+  { "id": "s02", "text": "Here is the flow. The API validates the request and saves every email to Postgres in a single transaction. Then it creates one BullMQ delayed job per email, with a deterministic job ID. There is no cron and no polling. When a job is due, the worker checks a Redis Lua script for the hourly limit and the minimum delay. It then claims the row atomically, sends through Ethereal, and records the result." },
+  { "id": "s03", "text": "Login is real Google OAuth. Login with Google takes you to Google's consent screen, and the backend verifies the ID token before it creates a session." },
+  { "id": "s04", "text": "Once I'm signed in, the header shows my Google name, email and avatar. On the left are the Scheduled and Sent tabs, the Compose button, and the Slack integration, which is already connected to my workspace." },
+  { "id": "s05", "text": "Let's compose an email. Every sender is its own Ethereal SMTP inbox, so I'll create a new one right here. Its password is stored encrypted." },
+  { "id": "s06", "text": "Now I'll upload a CSV of leads. The email column is detected automatically: seven unique addresses, with one duplicate removed and one invalid row skipped." },
+  { "id": "s07", "text": "I'll add a subject and body, set a three second delay between emails, and an hourly limit of three. So this campaign will hit the rate limit on purpose." },
+  { "id": "s08", "text": "I'll send it. The emails show up in the Scheduled tab right away, each with its planned send time." },
+  { "id": "s09", "text": "This is Bull Board, the live queue dashboard. It is protected behind the login. Here you can see one delayed job for every email." },
+  { "id": "s10", "text": "Back on the dashboard, the worker is sending. It waits the configured delay between emails. The limiter lives in Redis, so it behaves the same across any number of workers. Three emails are sent, which is exactly the hourly limit." },
+  { "id": "s11", "text": "If I open one, I can see its full lifecycle. And this is the actual message that Ethereal captured." },
+  { "id": "s12", "text": "The other four were not dropped and did not fail. They were rescheduled, in order, into the next hour windows. And the moment the limit was hit, the app posted an alert to Slack." },
+  { "id": "s13", "text": "This is that Slack message. It shows the sender, the limit, and the next send time. It is sent once per sender per hour, not once per email. If Slack is not connected, the alert is simply skipped." },
+  { "id": "s14", "text": "Now the most important part: surviving a restart. I'll schedule two emails to go out in about a minute." },
+  { "id": "s15", "text": "Now I'm stopping both the API and the worker. The server is completely down. But the delayed jobs are persisted in Redis, and the emails are safe in Postgres." },
+  { "id": "s16", "text": "I start it again. On boot, the worker runs a one-time reconciliation that recreates any missing job. Nothing is re-sent, and nothing restarts from scratch." },
+  { "id": "s17", "text": "When the scheduled time arrives, both emails go out on time, exactly once. Duplicates are blocked at four levels: an idempotency key on the request, a unique key per recipient, a deterministic job ID, and an atomic change from scheduled to processing." },
+  { "id": "s18", "text": "Finally, load. I'll schedule one thousand emails, all due at the same moment, with a limit of twenty per hour. All of them are accepted in a single request. Twenty go out this hour, two seconds apart, and the rest are spread across the following hours. Nothing is lost." },
+  { "id": "s19", "text": "Every email is indexed in Elasticsearch, so I can search by an exact recipient, or across the subject and body." },
+  { "id": "s20", "text": "Everything is covered by fifty-two backend tests against real Postgres, Redis and Elasticsearch, plus Playwright end-to-end tests. The README explains the setup, the architecture and the trade-offs. Thanks for watching!" }
+]
