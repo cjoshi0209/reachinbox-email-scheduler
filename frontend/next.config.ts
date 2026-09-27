@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
     return [
       { source: '/api/:path*', destination: `${backend}/api/:path*` },
       { source: '/auth/:path*', destination: `${backend}/auth/:path*` },
+      // Bull Board, so the whole app works behind a single public origin.
+      { source: '/admin/queues', destination: `${backend}/admin/queues` },
+      { source: '/admin/queues/:path*', destination: `${backend}/admin/queues/:path*` },
     ];
   },
 };

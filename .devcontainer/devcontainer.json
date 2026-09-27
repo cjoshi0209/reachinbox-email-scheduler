@@ -1,0 +1,14 @@
+{
+  "name": "ReachInbox Scheduler",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "hostRequirements": { "cpus": 4, "memory": "16gb" },
+  "forwardPorts": [3000, 4000],
+  "portsAttributes": {
+    "3000": { "label": "Dashboard", "onAutoForward": "silent" },
+    "4000": { "label": "API", "onAutoForward": "silent" }
+  },
+  "postCreateCommand": "cd backend && npm ci && cd ../frontend && npm ci"
+}

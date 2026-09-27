@@ -10,8 +10,6 @@ import { useToast } from '@/components/ui/Toast';
 import { useClickOutside } from '@/components/ui/useClickOutside';
 import { api } from '@/lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
-
 export function UserMenu() {
   const user = useCurrentUser();
   const [open, setOpen] = useState(false);
@@ -57,7 +55,7 @@ export function UserMenu() {
         <div role="menu" className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-line bg-white py-1 shadow-lg">
           <a
             role="menuitem"
-            href={`${API_URL}/admin/queues`}
+            href="/admin/queues"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface"
