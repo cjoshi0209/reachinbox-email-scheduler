@@ -21,6 +21,7 @@ docker-compose.yml   Postgres 17, Redis 7 (AOF), Elasticsearch 8
 7. [Testing](#7-testing)
 8. [Demo script](#8-demo-script-5-min)
 9. [Assumptions & trade-offs](#9-assumptions--trade-offs)
+10. [Credits & third-party material](#10-credits--third-party-material)
 
 ---
 
@@ -367,3 +368,20 @@ To present it yourself:
 - **Body is plain text** (rendered to escaped HTML for the email). The Figma's rich-text toolbar wasn't implemented, to avoid shipping non-functional buttons.
 - **Session:** a stateless signed cookie (7 days); logout clears it. Server-side revocation would need a session store.
 - **Recipients per request** are capped at 10,000 to bound one transaction. Bigger lists can be split client-side.
+
+---
+
+## 10. Credits & third-party material
+
+The application code in this repository was written for this assignment and is not copied from other projects. The following material comes from elsewhere and is used under its own terms:
+
+| Material | Source | Terms / use |
+|---|---|---|
+| UI design (layout, colours, "ONB" wordmark, screens) | Outbox Labs assignment Figma | Provided as the spec for this assignment |
+| Google "G" mark on the login button | Google Sign-In branding | Used as intended for a "Login with Google" button |
+| Slack logo in the Slack panel | Slack brand assets | Used to identify the Slack integration |
+| Inter, Space Mono fonts | Google Fonts via `next/font` | SIL Open Font License |
+| Icons | [lucide-react](https://lucide.dev) | ISC |
+| npm dependencies (Express, BullMQ, Prisma, Next.js, …) | npm | All permissive: MIT, Apache-2.0, ISC, BSD-2-Clause, MIT-0 |
+| `samples/leads.csv` | Invented for testing | Fictional addresses |
+| Demo voice-over | Windows built-in text-to-speech (OneCore "Mark" voice) | Generated locally from `frontend/scripts/demo/narration.json` |
