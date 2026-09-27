@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+
+/* Design tokens taken from the Figma (Outbox Labs Assignment). */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-logo: var(--font-mono-logo), ui-monospace, monospace;
+
+  --color-brand-50: #eaf7ee;
+  --color-brand-100: #d6f0de;
+  --color-brand-500: #20a849;
+  --color-brand-600: #179b3e;
+  --color-brand-700: #12802f;
+
+  --color-ink: #1c1c1c;
+  --color-muted: #7a7a7a;
+  --color-faint: #a3a3a3;
+  --color-line: #efefef;
+  --color-surface: #f5f5f5;
+
+  --color-warn-bg: #ffeedd;
+  --color-warn-line: #ffd2a6;
+  --color-warn-ink: #c2410c;
+}
+
+html,
+body {
+  @apply bg-white text-ink antialiased;
+}
+
+* {
+  @apply border-line;
+}
+
+::selection {
+  @apply bg-brand-100;
+}

@@ -1,0 +1,10 @@
+name,email,company
+Tame Tester,tame@jmail.com,Acme
+Lame Tester,lame@jmail.com,Acme
+Dame Tester,dame@jmail.com,Globex
+Same Tester,same@jmail.com,Globex
+Game Tester,game@jmail.com,Initech
+Fame Tester,fame@jmail.com,Initech
+Name Tester,name@jmail.com,Umbrella
+Duplicate Row,TAME@jmail.com,Acme
+Broken Row,not-an-email@,Nowhere

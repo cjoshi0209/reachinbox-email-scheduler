@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EmailStatus {
+  scheduled
+  processing
+  sent
+  failed
+  cancelled
+}
+
+model User {
+  id        String   @id @default(cuid())
+  googleId  String   @unique
+  email     String   @unique
+  name      String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  senders         Sender[]
+  campaigns       Campaign[]
+  emails          ScheduledEmail[]
+  slackConnection SlackConnection?
+}
+
+/// An SMTP identity emails are sent from. SMTP password is stored AES-256-GCM encrypted.
+model Sender {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  email     String
+  smtpHost  String
+  smtpPort  Int
+  smtpUser  String
+  smtpPass  String
+  secure    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns Campaign[]
+  emails    ScheduledEmail[]
+
+  @@unique([userId, email])
+  @@index([userId])
+}
+
+/// One "Compose -> Schedule" submission. requestKey makes the schedule API idempotent.
+model Campaign {
+  id           String   @id @default(cuid())
+  userId       String
+  senderId     String
+  requestKey   String
+  subject      String
+  body         String
+  startAt      DateTime
+  delayMs      Int
+  hourlyLimit  Int
+  totalEmails  Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sender Sender           @relation(fields: [senderId], references: [id], onDelete: Restrict)
+  emails ScheduledEmail[]
+
+  @@unique([userId, requestKey])
+  @@index([userId, createdAt])
+}
+
+model ScheduledEmail {
+  id                  String      @id @default(cuid())
+  campaignId          String
+  userId              String
+  senderId            String
+  recipient           String
+  subject             String
+  body                String
+  /// Position within the campaign; used to keep ordering stable when rescheduling.
+  sequence            Int
+  scheduledAt         DateTime
+  /// The first time this email was scheduled for; never changes after creation.
+  originalScheduledAt DateTime
+  status              EmailStatus @default(scheduled)
+  bullJobId           String      @unique
+  /// sha256(campaignId + normalized recipient) - one email per recipient per campaign.
+  idempotencyKey      String      @unique
+  attempts            Int         @default(0)
+  rescheduleCount     Int         @default(0)
+  processingAt        DateTime?
+  sentAt              DateTime?
+  failedAt            DateTime?
+  error               String?
+  messageId           String?
+  previewUrl          String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sender   Sender   @relation(fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status, scheduledAt])
+  @@index([userId, status, sentAt])
+  @@index([status, scheduledAt])
+}
+
+/// Per-user Slack OAuth result. Tokens are stored encrypted.
+model SlackConnection {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  teamId      String
+  teamName    String
+  channelId   String?
+  channelName String?
+  webhookUrl  String?
+  accessToken String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
