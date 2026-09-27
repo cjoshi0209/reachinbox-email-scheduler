@@ -32,6 +32,22 @@ test.describe.serial('authenticated dashboard', () => {
     await expect(page.getByRole('alert').first()).toContainText('Add at least one recipient');
   });
 
+  test('creates a new Ethereal sender from the compose screen', async ({ page }) => {
+    // Regression: the dialog's <form> used to be nested in the compose <form>, so
+    // "Create sender" submitted the compose form instead of creating the sender.
+    await page.goto('/compose');
+    await page.getByTestId('sender-select').click();
+    await page.getByRole('button', { name: 'New Ethereal sender' }).click();
+    const dialog = page.getByRole('dialog', { name: 'New Ethereal sender' });
+    await dialog.getByRole('textbox').fill('E2E Second Sender');
+    const created = page.waitForResponse((r) => r.url().endsWith('/api/senders') && r.request().method() === 'POST');
+    await dialog.getByRole('button', { name: 'Create sender' }).click();
+    expect((await created).status()).toBe(201);
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText(/Sender .*@ethereal\.email created/)).toBeVisible();
+    await expect(page.getByText('Add at least one recipient')).toHaveCount(0);
+  });
+
   test('uploads a CSV, detects emails and schedules them', async ({ page }) => {
     await page.goto('/compose');
     await expect(page.getByTestId('sender-select')).toContainText('@ethereal.email');

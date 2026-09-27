@@ -2,7 +2,7 @@ import { logger } from './lib/logger';
 import { prisma } from './lib/prisma';
 import { redis } from './lib/redis';
 import { SmtpMailTransport } from './mail/mailer';
-import { emailQueue } from './queue/emailQueue';
+import { closeEmailQueue } from './queue/emailQueue';
 import { SenderRateLimiter } from './queue/rateLimiter';
 import { ensureIndex } from './search/elastic';
 import { reconcile } from './worker/reconcile';
@@ -20,7 +20,7 @@ async function main() {
     logger.info({ signal }, 'Shutting down worker gracefully (finishing active jobs)');
     await worker.close();
     transport.close();
-    await emailQueue.close();
+    await closeEmailQueue();
     await prisma.$disconnect();
     redis.disconnect();
     process.exit(0);

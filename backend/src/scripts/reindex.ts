@@ -2,7 +2,7 @@
 import { logger } from '../lib/logger';
 import { prisma } from '../lib/prisma';
 import { redis } from '../lib/redis';
-import { emailQueue } from '../queue/emailQueue';
+import { closeEmailQueue } from '../queue/emailQueue';
 import { ensureIndex, indexEmails, es } from '../search/elastic';
 
 async function main() {
@@ -30,7 +30,7 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
-    await emailQueue.close();
+    await closeEmailQueue();
     await es.close();
     await prisma.$disconnect();
     redis.disconnect();

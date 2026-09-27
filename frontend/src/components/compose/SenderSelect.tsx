@@ -111,6 +111,8 @@ function CreateSenderModal({
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    // React bubbles submit through portals to the page's compose form; keep it here.
+    e.stopPropagation();
     setBusy(true);
     try {
       const sender = await api.post<Sender>('/api/senders', { name: name.trim() || defaultName });

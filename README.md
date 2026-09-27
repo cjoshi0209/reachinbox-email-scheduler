@@ -133,17 +133,22 @@ The Next.js server proxies `/api/*` and `/auth/*` to the API, so the browser onl
 If they're missing, the login page says so explicitly instead of failing silently.
 
 ### 5. Slack OAuth (for rate-limit alerts)
-1. <https://api.slack.com/apps> → **Create New App → From scratch**.
-2. **OAuth & Permissions → Bot Token Scopes:** `incoming-webhook`, `chat:write`.
-3. Slack only accepts **HTTPS** redirect URLs, so expose the API through a tunnel:
-   ```bash
-   cloudflared tunnel --url http://localhost:4000     # or: ngrok http 4000
+1. <https://api.slack.com/apps> → **Create New App → From a manifest**, pick your workspace, and paste:
+   ```json
+   {
+     "display_information": { "name": "ReachInbox Scheduler" },
+     "features": { "bot_user": { "display_name": "ReachInbox Alerts" } },
+     "oauth_config": {
+       "redirect_urls": ["http://localhost:4000/auth/slack/callback"],
+       "scopes": { "bot": ["incoming-webhook", "chat:write"] }
+     }
+   }
    ```
-   Add `https://<tunnel-host>/auth/slack/callback` as a **Redirect URL** in the Slack app.
-4. In `backend/.env`: `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_REDIRECT_URI=https://<tunnel-host>/auth/slack/callback`. Restart the API.
-5. In the dashboard sidebar click **Connect Slack**, pick a channel, and approve. Then use **Test** to send a message.
+   (Or create it from scratch: **OAuth & Permissions** → bot scopes `incoming-webhook` and `chat:write`, and the redirect URL above.)
+2. **Basic Information → App Credentials** → copy the Client ID and Client Secret into `backend/.env` as `SLACK_CLIENT_ID` and `SLACK_CLIENT_SECRET`. Restart the API.
+3. In the dashboard sidebar click **Connect Slack**, pick a channel, and approve. Then use **Test** to send a message.
 
-The OAuth `state` is a signed, 10-minute token that carries the user id, so the callback works through the tunnel even without the session cookie. Tokens and webhook URLs are stored **AES-256-GCM encrypted**.
+Slack accepts `http://localhost` redirect URLs for development, so no tunnel is needed locally. For a deployed API, use its `https://…/auth/slack/callback` and set `SLACK_REDIRECT_URI`. The OAuth `state` is a signed, 10-minute token that carries the user id, so the callback also works on a different host without the session cookie. Tokens and webhook URLs are stored **AES-256-GCM encrypted**.
 
 ### 6. Ethereal
 Nothing to configure. In **Compose → From → New Ethereal sender** the backend calls `nodemailer.createTestAccount()`, verifies the SMTP login, and stores the credentials encrypted. Ethereal captures the mail (it's never delivered). Every sent email gets a **preview URL** (the "Open in Ethereal" button on the email page). You can also add your own SMTP account through `POST /api/senders` with an `smtp` object.
@@ -295,9 +300,9 @@ curl -X POST http://localhost:4000/api/emails/schedule \
 The backend tests run against **real** Postgres, Redis and Elasticsearch, fully isolated from dev data: Postgres schema `test`, Redis DB 1, queue `email-send-test`, index `emails_test`. Only SMTP is replaced, by an in-memory transport.
 
 ```bash
-cd backend && npm test          # 52 tests: unit + integration (≈30 s)
+cd backend && npm test          # 52 tests: unit + integration (≈30 s), hermetic (ignores OAuth creds in .env)
 cd frontend && npm test         # 12 tests: CSV parsing
-cd frontend && npm run test:e2e # 8 Playwright tests; needs API + worker + Next running (real Ethereal SMTP)
+cd frontend && npm run test:e2e # 9 Playwright tests; needs API + worker + Next running (real Ethereal SMTP)
 npm run typecheck && npm run lint   # both packages: strict TS, ESLint clean
 ```
 
@@ -315,13 +320,24 @@ npm run typecheck && npm run lint   # both packages: strict TS, ESLint clean
 | Elasticsearch (subject/recipient/status search, exact-email vs look-alikes, typo tolerance, cancel re-indexed, per-user isolation) | `backend/tests/integration/api.test.ts` |
 | API (auth required, tampered cookie, validation, Bull Board protection, helmet, OAuth state rejection) | `api.test.ts` |
 | CSV parsing (header/no header, any column, quotes, `;`/tab/CRLF/BOM, `Name <email>`, dupes, invalid, 10k rows) | `frontend/src/lib/csv.test.ts` |
-| E2E: login redirect, header user info, empty states, validation, CSV upload → schedule → real Ethereal send → Sent tab + preview link, search, mobile layout, logout | `frontend/e2e/dashboard.spec.ts` |
+| E2E: login redirect, header user info, empty states, validation, creating an Ethereal sender from the dialog, CSV upload → schedule → real Ethereal send → Sent tab + preview link, search, mobile layout, logout | `frontend/e2e/dashboard.spec.ts` |
+
+### Verified live (not just in tests)
+These were run by hand against the real services, beyond what the automated tests cover:
+- **Google OAuth:** real sign-in through Google's consent screen; the header shows the Google name, email and avatar.
+- **Slack OAuth + alerts:** connected a workspace through **Connect Slack**. **Test** delivered a message. A campaign with hourly limit 3 sent 3 emails, rescheduled 4 into the next hour, and posted **exactly one** "Hourly send limit reached" alert to the channel.
+- **Restart:** hard-killed the API and worker *and* restarted Redis with pending delayed jobs. After the restart every email was sent at its original time with `attempts=1`.
+- **Load:** 1,000 emails due at once with a limit of 3/hour. 3 were sent 2 s apart and 997 were rescheduled immediately, in order, across later hours.
 
 Google's own consent screen can't be automated, so the E2E setup signs a session cookie for a test user with the backend's `SESSION_SECRET` (`backend/tests/helpers/testUser.ts`). The app itself has no non-Google login.
 
 ---
 
 ## 8. Demo script (≤ 5 min)
+
+**Recorded demo:** [`docs/demo.webm`](docs/demo.webm) (recorded against the live stack with `frontend/scripts/record-demo.mjs`). It shows login, compose + CSV, scheduled/sent, Bull Board, the hourly limit with rescheduling and the Slack alert, a backend stop/restart, 1,000 emails under load, and search.
+
+To present it yourself:
 
 1. `docker compose up -d`, `cd backend && npm run dev`, `cd frontend && npm run dev`. Open <http://localhost:3000>. **Login with Google** → the dashboard shows name, email and avatar.
 2. **Connect Slack** (sidebar) → approve → **Test** → a message appears in the channel.

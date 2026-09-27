@@ -3,7 +3,7 @@ import { config } from './config';
 import { logger } from './lib/logger';
 import { prisma } from './lib/prisma';
 import { redis } from './lib/redis';
-import { emailQueue } from './queue/emailQueue';
+import { closeEmailQueue } from './queue/emailQueue';
 import { BULL_BOARD_PATH } from './admin/bullBoard';
 import { ensureIndex } from './search/elastic';
 
@@ -19,7 +19,7 @@ async function main() {
   const shutdown = (signal: string) => {
     logger.info({ signal }, 'Shutting down API');
     server.close(async () => {
-      await emailQueue.close();
+      await closeEmailQueue();
       await prisma.$disconnect();
       redis.disconnect();
       process.exit(0);

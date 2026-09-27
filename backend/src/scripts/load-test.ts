@@ -15,7 +15,7 @@ import { parseArgs } from 'node:util';
 import { scheduleCampaign } from '../emails/emailService';
 import { prisma } from '../lib/prisma';
 import { redis } from '../lib/redis';
-import { emailQueue } from '../queue/emailQueue';
+import { closeEmailQueue, emailQueue } from '../queue/emailQueue';
 import { es } from '../search/elastic';
 
 async function main() {
@@ -60,7 +60,7 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
-    await emailQueue.close();
+    await closeEmailQueue();
     await es.close();
     await prisma.$disconnect();
     redis.disconnect();

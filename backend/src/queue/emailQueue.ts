@@ -15,8 +15,10 @@ export interface EmailJobData {
 /** Deterministic job id: re-adding the same email is a no-op in BullMQ (dedupe). BullMQ forbids ':' in custom ids. */
 export const jobIdFor = (emailId: string) => `email_${emailId}`;
 
+const queueConnection = createRedis();
+
 export const emailQueue = new Queue<EmailJobData>(EMAIL_QUEUE, {
-  connection: createRedis(),
+  connection: queueConnection,
   defaultJobOptions: {
     attempts: config.EMAIL_MAX_ATTEMPTS,
     backoff: { type: 'exponential', delay: config.EMAIL_BACKOFF_MS },
@@ -25,6 +27,12 @@ export const emailQueue = new Queue<EmailJobData>(EMAIL_QUEUE, {
     removeOnFail: { age: 14 * 24 * 3600 },
   },
 });
+
+/** BullMQ never closes a connection instance it was given, so close ours explicitly. */
+export async function closeEmailQueue(): Promise<void> {
+  await emailQueue.close();
+  queueConnection.disconnect();
+}
 
 export async function enqueueEmail(emailId: string, scheduledAt: Date): Promise<void> {
   await emailQueue.add(

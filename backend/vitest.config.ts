@@ -27,6 +27,11 @@ export default defineConfig({
       EMAIL_BACKOFF_MS: '100',
       STALE_PROCESSING_MS: '60000',
       FRONTEND_URL: 'http://localhost:3000',
+      // Hermetic: never pick up real OAuth apps from a developer's .env.
+      GOOGLE_CLIENT_ID: '',
+      GOOGLE_CLIENT_SECRET: '',
+      SLACK_CLIENT_ID: '',
+      SLACK_CLIENT_SECRET: '',
       BULL_BOARD_USER: 'admin',
       BULL_BOARD_PASSWORD: 'secret-pass',
     },

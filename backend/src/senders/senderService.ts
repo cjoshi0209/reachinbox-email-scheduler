@@ -46,13 +46,37 @@ export function toPublicSender(s: Sender): PublicSender {
   };
 }
 
+interface EtherealAccount {
+  user: string;
+  pass: string;
+  smtp: { host: string; port: number; secure: boolean };
+}
+
+/**
+ * Same endpoint nodemailer.createTestAccount() uses, called directly: nodemailer caches
+ * the first account for the whole process, which would give every sender the same inbox.
+ */
+async function createEtherealAccount(): Promise<EtherealAccount> {
+  const res = await fetch('https://api.nodemailer.com/user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requestor: 'reachinbox-scheduler', version: '1.0.0' }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const data = (await res.json()) as Partial<EtherealAccount> & { status?: string; error?: string };
+  if (!res.ok || data.status !== 'success' || !data.user || !data.pass || !data.smtp) {
+    throw new Error(`Ethereal API error: ${data.error ?? res.status}`);
+  }
+  return { user: data.user, pass: data.pass, smtp: data.smtp };
+}
+
 export async function createSender(userId: string, input: CreateSenderInput): Promise<Sender> {
   let smtp: { host: string; port: number; secure: boolean; user: string; pass: string; email: string };
   if (input.smtp) {
     smtp = { ...input.smtp, email: input.smtp.email ?? input.smtp.user };
   } else {
     try {
-      const account = await nodemailer.createTestAccount();
+      const account = await createEtherealAccount();
       smtp = {
         host: account.smtp.host,
         port: account.smtp.port,
