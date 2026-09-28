@@ -5,11 +5,12 @@ import { ApiError, fetcher } from './api';
 import type { EmailStats, SendersResponse, SlackStatus, User } from './types';
 
 export function useUser() {
-  const { data, error, isLoading, mutate } = useSWR<User, ApiError>('/api/auth/me', fetcher, {
+  const { data, error, isLoading, isValidating, mutate } = useSWR<User, ApiError>('/api/auth/me', fetcher, {
     shouldRetryOnError: (err: ApiError) => err.status !== 401,
     revalidateOnFocus: false,
   });
-  return { user: data, isLoading, unauthenticated: error?.status === 401, error, mutate };
+  // Only trust a 401 once it's fresh: a cached one can be stale right after signing in.
+  return { user: data, isLoading, isValidating, unauthenticated: error?.status === 401 && !isValidating, error, mutate };
 }
 
 /** Live-ish counters for the sidebar; refreshed every 5s while the tab is visible. */

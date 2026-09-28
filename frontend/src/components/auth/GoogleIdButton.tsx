@@ -34,7 +34,7 @@ function loadGsi(): Promise<GoogleIdApi> {
  * "Sign in with Google" via Google Identity Services: Google returns a signed ID token
  * which the API verifies (signature, audience, expiry, one-time nonce). No client secret needed.
  */
-export function GoogleIdButton({ clientId, onSuccess, onError }: { clientId: string; onSuccess: () => void; onError: (m: string) => void }) {
+export function GoogleIdButton({ clientId, onSuccess, onError }: { clientId: string; onSuccess: () => void | Promise<void>; onError: (m: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,7 +52,7 @@ export function GoogleIdButton({ clientId, onSuccess, onError }: { clientId: str
           callback: async ({ credential }) => {
             try {
               await api.post('/api/auth/google/token', { credential });
-              onSuccess();
+              await onSuccess();
             } catch (err) {
               onError(err instanceof ApiError ? err.message : 'Google sign-in failed');
             }
@@ -65,7 +65,7 @@ export function GoogleIdButton({ clientId, onSuccess, onError }: { clientId: str
           text: 'signin_with',
           shape: 'rectangular',
           logo_alignment: 'center',
-          width: ref.current.clientWidth || 320,
+          width: 336,
         });
       } catch (err) {
         onError((err as Error).message);

@@ -17,14 +17,14 @@ export function useCurrentUser(): User {
 
 /** Client-side guard: renders children only for a logged-in user, otherwise goes to /login. */
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { user, isLoading, unauthenticated, error, mutate } = useUser();
+  const { user, isLoading, isValidating, unauthenticated, error, mutate } = useUser();
   const router = useRouter();
 
   useEffect(() => {
     if (unauthenticated) router.replace('/login');
   }, [unauthenticated, router]);
 
-  if (isLoading || unauthenticated) return <FullPageSpinner />;
+  if (isLoading || unauthenticated || (!user && isValidating)) return <FullPageSpinner />;
   if (error || !user) return <ErrorState message={error?.message ?? 'Could not load your account'} onRetry={() => mutate()} />;
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 }

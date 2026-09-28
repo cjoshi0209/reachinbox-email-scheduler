@@ -22,12 +22,17 @@ const ERRORS: Record<string, string> = {
 function LoginCard() {
   const params = useSearchParams();
   const router = useRouter();
-  const { user } = useUser();
+  const { user, mutate: refreshUser } = useUser();
   const { data: providers } = useSWR<Providers>('/api/auth/providers', fetcher);
   const [redirecting, setRedirecting] = useState(false);
   const [gisError, setGisError] = useState<string | null>(null);
   const errorCode = params.get('error');
-  const onGisSuccess = useCallback(() => router.replace('/dashboard'), [router]);
+  // Re-fetch the session first: the cached "not logged in" answer from this page would
+  // otherwise bounce the dashboard straight back here.
+  const onGisSuccess = useCallback(async () => {
+    await refreshUser();
+    router.replace('/dashboard');
+  }, [refreshUser, router]);
 
   useEffect(() => {
     if (user) router.replace('/dashboard');
