@@ -34,6 +34,16 @@ describe('public endpoints', () => {
     expect(res.headers.location).toMatch(/\/login\?error=google_not_configured$/);
   });
 
+  it('Google ID-token flow: issues a one-time nonce cookie and refuses tokens when not configured', async () => {
+    const nonce = await request(app).get('/api/auth/google/nonce');
+    expect(nonce.body.nonce).toMatch(/^[\w-]{20,}$/);
+    expect(nonce.headers['set-cookie']?.[0]).toMatch(/rb_google_nonce=.*HttpOnly/);
+    const providers = await request(app).get('/api/auth/providers');
+    expect(providers.body).toEqual({ google: false, googleRedirect: false, googleClientId: null, slack: false });
+    const token = await request(app).post('/api/auth/google/token').send({ credential: 'x'.repeat(40) });
+    expect(token.status).toBe(503);
+  });
+
   it('GET /auth/google/callback rejects a missing/forged state', async () => {
     const res = await request(app).get('/auth/google/callback?code=abc&state=forged');
     expect(res.headers.location).toMatch(/error=invalid_state/);

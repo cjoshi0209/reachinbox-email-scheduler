@@ -103,6 +103,11 @@ export interface SlackStatus {
 }
 
 export interface Providers {
+  /** Some Google sign-in flow is available. */
   google: boolean;
+  /** Server-side authorization-code flow (server holds the client secret). */
+  googleRedirect: boolean;
+  /** Public client id for the Google Identity Services (ID token) flow. */
+  googleClientId: string | null;
   slack: boolean;
 }
